@@ -115,23 +115,6 @@
 
         config = mkIf cfg.enable {
           systemd.services.cbagentd = {
-            # [Unit]
-            # Description=Carbon Black Predictive Security Cloud Endpoint Agent.
-            # After=network.target
-
-            # [Service]
-            # Environment=OPENSSL_CONF=/var/opt/carbonblack/psc/ssl/openssl.cnf
-            # Environment=OPENSSL_MODULES=/opt/carbonblack/psc/lib
-            # ExecStartPre=/opt/carbonblack/psc/bin/install_openssl_fips.sh
-            # ExecStart=/opt/carbonblack/psc/bin/cbagentd --foreground
-            # KillMode=process
-            # Type=simple
-            # Restart=on-failure
-            # RestartSec=10
-            # UMask=077
-
-            # [Install]
-            # WantedBy=multi-user.target
             description = "Carbon Black Predictive Security Cloud Endpoint Agent.";
             after = ["network.target"];
             wantedBy = ["multi-user.target"];
