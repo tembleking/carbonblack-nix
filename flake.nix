@@ -101,7 +101,7 @@
         ...
       }: let
         inherit (lib) mkEnableOption mkOption mkIf;
-        cfg = config.services.carbon-black;
+        cfg = config.services.cbagentd;
       in {
         options.services.cbagentd = {
           enable = mkEnableOption "cbagentd";
