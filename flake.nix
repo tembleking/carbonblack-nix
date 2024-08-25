@@ -11,14 +11,12 @@
       system = "x86_64-linux";
       pkgs = import nixpkgs { inherit system; };
 
-      name = "cbagentd";
-      version = "2.15.2";
-      commit = "2321702";
-
       cbagentd =
         with pkgs;
-        stdenv.mkDerivation {
-          inherit name version;
+        stdenv.mkDerivation rec {
+          pname = "cbagentd";
+          version = "2.15.2";
+          commit = "2321702";
 
           src = ./cb-psc-sensor-${version}-${commit}.x86_64.deb;
 
@@ -37,57 +35,62 @@
             dpkg -X $src $out/var/carbonblack
             mkdir -p $out/var/run/ $out/opt/carbonblack $out/var/opt/carbonblack $out/etc
           '';
+
+          passthru = {
+            inherit commit;
+          };
+
+          meta.mainProgram = "cbagentd";
         };
-      cbagentdFHS =
-        with pkgs;
-        buildFHSEnv {
-          inherit name;
-          targetPkgs = pkgs: [
-            cbagentd
-            gnupg
-          ];
 
-          extraBwrapArgs = [
-            "--ro-bind /home /home"
-            "--tmpfs /opt/carbonblack"
-            "--tmpfs /var/opt/carbonblack"
-            "--tmpfs /var/opt/carbonblack/psc/log/"
-            "--tmpfs /var/opt/carbonblack/psc/pkgs/"
-            "--tmpfs /var/run"
-          ];
+      cbagentdFHS = pkgs.buildFHSEnv {
+        name = cbagentd.pname;
+        targetPkgs = pkgs: [
+          cbagentd
+          pkgs.gnupg
+        ];
 
-          runScript = writeShellScript "cbagentd" ''
-            registration_code="$1"
-            shift
+        extraBwrapArgs = [
+          "--ro-bind /home /home"
+          "--tmpfs /opt/carbonblack"
+          "--tmpfs /var/opt/carbonblack"
+          "--tmpfs /var/opt/carbonblack/psc/log/"
+          "--tmpfs /var/opt/carbonblack/psc/pkgs/"
+          "--tmpfs /var/run"
+        ];
 
-            echo ">> Copying the contents from the derivation to the writable tmpfs"
-            cp -r -L /var/carbonblack/* /
+        runScript = pkgs.writeShellScript "cbagentd" ''
+          registration_code="$1"
+          shift
 
-            echo Registering blades
-            if [ -f /opt/carbonblack/psc/blades/E51C4A7E-2D41-4F57-99BC-6AA907CA3B40/bladeConfigure.sh ]; then
-              /opt/carbonblack/psc/blades/E51C4A7E-2D41-4F57-99BC-6AA907CA3B40/bladeConfigure.sh
-            fi
-            if [ -f /opt/carbonblack/psc/blades/40E797FD-4322-4D33-8E8C-EF697F4C2323/bladeConfigure.sh ]; then
-              /opt/carbonblack/psc/blades/40E797FD-4322-4D33-8E8C-EF697F4C2323/bladeConfigure.sh
-            fi
-            if [ -f /var/opt/carbonblack/psc/cfg.ini.dpkg-dist ]; then
-              /opt/carbonblack/psc/bin/mergeConfigs.sh /var/opt/carbonblack/psc/cfg.ini.dpkg-dist /var/opt/carbonblack/psc/cfg.ini
-              rm -f /var/opt/carbonblack/psc/cfg.ini.dpkg-dist
-            fi
+          echo ">> Copying the contents from the derivation to the writable tmpfs"
+          cp -r -L /var/carbonblack/* /
 
-            echo ">> Installing OpenSSL fips"
-            /opt/carbonblack/psc/bin/install_openssl_fips.sh
+          echo Registering blades
+          if [ -f /opt/carbonblack/psc/blades/E51C4A7E-2D41-4F57-99BC-6AA907CA3B40/bladeConfigure.sh ]; then
+            /opt/carbonblack/psc/blades/E51C4A7E-2D41-4F57-99BC-6AA907CA3B40/bladeConfigure.sh
+          fi
+          if [ -f /opt/carbonblack/psc/blades/40E797FD-4322-4D33-8E8C-EF697F4C2323/bladeConfigure.sh ]; then
+            /opt/carbonblack/psc/blades/40E797FD-4322-4D33-8E8C-EF697F4C2323/bladeConfigure.sh
+          fi
+          if [ -f /var/opt/carbonblack/psc/cfg.ini.dpkg-dist ]; then
+            /opt/carbonblack/psc/bin/mergeConfigs.sh /var/opt/carbonblack/psc/cfg.ini.dpkg-dist /var/opt/carbonblack/psc/cfg.ini
+            rm -f /var/opt/carbonblack/psc/cfg.ini.dpkg-dist
+          fi
 
-            echo ">> Decoding registration code"
-            /opt/carbonblack/psc/bin/cbagentd --stdout -d "$registration_code"
+          echo ">> Installing OpenSSL fips"
+          /opt/carbonblack/psc/bin/install_openssl_fips.sh
 
-            echo ">> Registering device"
-            /opt/carbonblack/psc/bin/cbagentd --stdout -r
+          echo ">> Decoding registration code"
+          /opt/carbonblack/psc/bin/cbagentd --stdout -d "$registration_code"
 
-            echo ">> Executing cbagentd"
-            exec /opt/carbonblack/psc/bin/cbagentd "$@"
-          '';
-        };
+          echo ">> Registering device"
+          /opt/carbonblack/psc/bin/cbagentd --stdout -r
+
+          echo ">> Executing cbagentd"
+          exec /opt/carbonblack/psc/bin/cbagentd "$@"
+        '';
+      };
     in
     {
       defaultPackage.${system} = cbagentdFHS;
