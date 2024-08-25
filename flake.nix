@@ -40,24 +40,25 @@
         };
       cbagentdFHS =
         with pkgs;
-        buildFHSUserEnv {
+        buildFHSEnv {
           inherit name;
           targetPkgs = pkgs: [
             cbagentd
             gnupg
-            strace
           ];
 
-          extraBwrapArgs = [ "--bind-try /home /home" ];
+          extraBwrapArgs = [
+            "--ro-bind /home /home"
+            "--tmpfs /opt/carbonblack"
+            "--tmpfs /var/opt/carbonblack"
+            "--tmpfs /var/opt/carbonblack/psc/log/"
+            "--tmpfs /var/opt/carbonblack/psc/pkgs/"
+            "--tmpfs /var/run"
+          ];
 
           runScript = writeShellScript "cbagentd" ''
             registration_code="$1"
             shift
-
-            echo ">> Creating the writable tmpfs for carbon black to run"
-            mount -t tmpfs none /opt/carbonblack
-            mount -t tmpfs none /var/opt/carbonblack
-            mount -t tmpfs none /var/run/
 
             echo ">> Copying the contents from the derivation to the writable tmpfs"
             cp -r -L /var/carbonblack/* /
@@ -73,7 +74,6 @@
               /opt/carbonblack/psc/bin/mergeConfigs.sh /var/opt/carbonblack/psc/cfg.ini.dpkg-dist /var/opt/carbonblack/psc/cfg.ini
               rm -f /var/opt/carbonblack/psc/cfg.ini.dpkg-dist
             fi
-            mkdir -m 700 -p /var/opt/carbonblack/psc/pkgs
 
             echo ">> Installing OpenSSL fips"
             /opt/carbonblack/psc/bin/install_openssl_fips.sh
