@@ -9,7 +9,7 @@
     { self, nixpkgs }:
     let
       system = "x86_64-linux";
-      pkgs = nixpkgs.legacyPackages.${system};
+      pkgs = import nixpkgs { inherit system; };
 
       name = "cbagentd";
       version = "2.15.2";
@@ -89,10 +89,9 @@
           '';
         };
     in
-    with pkgs;
     {
       defaultPackage.${system} = cbagentdFHS;
-      formatter.${system} = alejandra;
+      formatter.${system} = pkgs.nixfmt-rfc-style;
 
       nixosModules.cbagentd =
         {
