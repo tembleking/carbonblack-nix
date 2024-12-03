@@ -1,6 +1,11 @@
-{ pkgs, cbagentd-unwrapped }:
-pkgs.buildFHSEnv {
-  name = cbagentd-unwrapped.pname;
+{
+  buildFHSEnv,
+  writeShellScript,
+  cbagentd-unwrapped,
+}:
+buildFHSEnv {
+  pname = "cbagentd";
+  version = cbagentd-unwrapped.version;
   targetPkgs = pkgs: [
     cbagentd-unwrapped
     pkgs.gnupg
@@ -8,19 +13,17 @@ pkgs.buildFHSEnv {
 
   extraBwrapArgs = [
     "--ro-bind /home /home"
-    "--tmpfs /opt/carbonblack"
-    "--tmpfs /var/opt/carbonblack"
-    "--tmpfs /var/opt/carbonblack/psc/log/"
-    "--tmpfs /var/opt/carbonblack/psc/pkgs/"
+    "--tmpfs /opt"
+    "--tmpfs /var"
     "--tmpfs /var/run"
   ];
 
-  runScript = pkgs.writeShellScript "cbagentd" ''
+  runScript = writeShellScript "cbagentd" ''
     registration_code="$1"
     shift
 
     echo ">> Copying the contents from the derivation to the writable tmpfs"
-    cp -r -L /var/carbonblack/* /
+    cp -r -L ${cbagentd-unwrapped}/var/carbonblack/* /
 
     echo Registering blades
     if [ -f /opt/carbonblack/psc/blades/E51C4A7E-2D41-4F57-99BC-6AA907CA3B40/bladeConfigure.sh ]; then
@@ -46,4 +49,6 @@ pkgs.buildFHSEnv {
     echo ">> Executing cbagentd"
     exec /opt/carbonblack/psc/bin/cbagentd "$@"
   '';
+
+  meta.mainProgram = "cbagentd";
 }

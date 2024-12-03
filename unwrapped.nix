@@ -6,7 +6,7 @@
   libgcc,
 }:
 stdenv.mkDerivation rec {
-  pname = "cbagentd";
+  pname = "cbagentd-unwrapped";
   version = "2.15.2";
   commit = "2321702";
 
@@ -25,12 +25,9 @@ stdenv.mkDerivation rec {
   installPhase = ''
     mkdir -p $out/var/carbonblack
     dpkg -X $src $out/var/carbonblack
-    mkdir -p $out/var/run/ $out/opt/carbonblack $out/var/opt/carbonblack $out/etc
   '';
 
   passthru = {
     inherit commit;
   };
-
-  meta.mainProgram = "cbagentd";
 }
