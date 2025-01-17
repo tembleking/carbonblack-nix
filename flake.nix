@@ -25,7 +25,7 @@
         default = pkgs.cbagentd;
       };
 
-      nixosModules.cbagentd = import ./module.nix { flake = self; };
+      nixosModules.cbagentd = pkgs.callPackage ./module.nix { };
 
       formatter.${system} = pkgs.nixfmt-rfc-style;
     };

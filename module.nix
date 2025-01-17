@@ -1,4 +1,4 @@
-{ flake }:
+{ cbagentd-unwrapped, cbagentd }:
 {
   config,
   lib,
@@ -6,7 +6,6 @@
   ...
 }:
 let
-  inherit (flake.packages.${pkgs.system}) cbagentd cbagentd-unwrapped;
   inherit (lib) mkEnableOption mkOption mkIf;
   cfg = config.services.cbagentd;
 in
